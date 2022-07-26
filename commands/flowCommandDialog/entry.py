@@ -261,10 +261,10 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
         password = Data["password"]
 
     # authenticating 
-    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_j8xXNOJHi"
+    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_iODQDOUFS"
 
     payload = {
-        "ClientId": "646qipnsvosj5dffr6sjv9npkc",
+        "ClientId": "4bmi0kl02b8312nt2qnacdkubn",
         "AuthFlow": "USER_PASSWORD_AUTH",
         "AuthParameters": {
             "USERNAME": username,
@@ -285,7 +285,7 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
 
     # transport with a defined url endpoint
     transport = AIOHTTPTransport(
-        url = "https://testing.api.flowengineering.com/v1/graphql",
+        url = "https://api.flowengineering.com/v1/graphql",
         headers = {
             "Authorization": f'Bearer {token}'
         },
@@ -371,10 +371,10 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
         password = Data["password"]
 
     # authenticating 
-    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_j8xXNOJHi"
+    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_iODQDOUFS"
 
     payload = {
-        "ClientId": "646qipnsvosj5dffr6sjv9npkc",
+        "ClientId": "4bmi0kl02b8312nt2qnacdkubn",
         "AuthFlow": "USER_PASSWORD_AUTH",
         "AuthParameters": {
             "USERNAME": username,
@@ -395,7 +395,7 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
 
     # transport with a defined url endpoint
     transport = AIOHTTPTransport(
-        url = "https://testing.api.flowengineering.com/v1/graphql",
+        url = "https://api.flowengineering.com/v1/graphql",
         headers = {
             "Authorization": f'Bearer {token}'
         },
