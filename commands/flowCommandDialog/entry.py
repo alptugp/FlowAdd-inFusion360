@@ -199,8 +199,8 @@ def run(context, operation):
         ui: adsk.core.UserInterface = app.userInterface
 
         # What to open
-        target_project_name = "Admin Project"
-        target_design_name = "simple-model"
+        target_project_name = app.data.activeProject.name
+        target_design_name = removeVersionSuffix(app.activeProduct.rootComponent.name)
         
         # Open this design in fusion to get access to much deeper parts of the API
         open_docs_by_name(app, ui, target_project_name, target_design_name)
@@ -213,11 +213,11 @@ def run(context, operation):
         if operation == "pull":
             # fetches values from Flow and updates the parameters in Fusion
             fetchDatafromFlow(ui, design)
-            ui.messageBox("Values pulled from Flow successfully")
+            ui.messageBox("Parameters pulled from Flow successfully")
         elif operation == "push":
             # pushes values to Flow
             pushValuesToFlow(ui, design)
-            ui.messageBox("Values pushed to Flow successfully")
+            ui.messageBox("Parameters pushed to Flow successfully")
               
     except:
         if ui:
@@ -636,6 +636,14 @@ def getDatasQueryResult(client, categoryId):
 
     datasQueryResult = client.execute(datasQuery, variable_values={"categoryId": categoryId})
     return datasQueryResult
+
+def removeVersionSuffix(fileName):
+    splittedFileName = fileName.split()
+    rm = splittedFileName[:-1]
+    listToStr = ' '.join([str(elem) for elem in rm])
+    return listToStr
+
+
 
 #def getFolderId(client, categoryId):
 #    dataFolderQuery = gql(
