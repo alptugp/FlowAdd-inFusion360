@@ -503,8 +503,39 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
 	                                                      "value": paramInModel.itemByName(convertToFusionName(name)).expression
                                                          })
 
+    # THE FOLLOWING PART HANDLES PUSHING PHYSICAL PROPERTIES SUCH AS MASS AND VOLUME
+
+    # Get the root component of the active design.
+    product = app.activeProduct
+    rootComp = adsk.fusion.Design.cast(product).rootComponent
 
 
+    # The following two for loops traverses through the active design and totals the volume of every body within the design.
+
+    # Iterate over any bodies in the root component.
+    totalVolume = 0
+    for i in range(0, rootComp.bRepBodies.count):
+        body = rootComp.bRepBodies.item(i)
+        # Get the volume of the current body and add it to the total.
+        totalVolume += body.volume
+
+    # Iterate through all of the occurrences in the assembly.
+    for i in range(0, rootComp.allOccurrences.count):
+        occ = rootComp.allOccurrences.item(i)
+            
+        # Get the associated component.
+        comp = occ.component
+            
+        # Iterate over all of the bodies within the component.
+        for j in range(0, comp.bRepBodies.count):
+            body = comp.bRepBodies.item(j)
+                
+            # Get the volume of the current body and add it to the total.
+            totalVolume += body.volume
+
+    # ui.messageBox(str(totalVolume))
+
+    
 
 
 def convertToFlowName(fusionName):
