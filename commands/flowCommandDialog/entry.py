@@ -510,14 +510,16 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
     rootComp = adsk.fusion.Design.cast(product).rootComponent
 
 
-    # The following two for loops traverses through the active design and totals the volume of every body within the design.
+    # The following two for loops traverses through the active design and totals the mass and volume of every body within the design.
 
     # Iterate over any bodies in the root component.
     totalVolume = 0
+    totalMass = 0
     for i in range(0, rootComp.bRepBodies.count):
         body = rootComp.bRepBodies.item(i)
-        # Get the volume of the current body and add it to the total.
-        totalVolume += body.volume
+        # Get the mass and volume of the current body and add it to the total.
+        totalVolume += body.physicalProperties.volume
+        totalMass += body.physicalProperties.mass
 
     # Iterate through all of the occurrences in the assembly.
     for i in range(0, rootComp.allOccurrences.count):
@@ -530,14 +532,16 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
         for j in range(0, comp.bRepBodies.count):
             body = comp.bRepBodies.item(j)
                 
-            # Get the volume of the current body and add it to the total.
-            totalVolume += body.volume
+            # Get the mass and volume of the current body and add it to the total.
+            totalVolume += body.physicalProperties.volume
+            totalMass += body.physicalProperties.mass
 
-    # ui.messageBox(str(totalVolume))
+    # Create the expression for the volume using the default distance units
+    volumeResult = design.unitsManager.formatInternalValue(totalVolume, design.unitsManager.defaultLengthUnits + '^3', True)
+    # Create the expression for the mass using the 'kg' unit
+    massResult = str(totalVolume) + " kg"
 
     
-
-
 def convertToFlowName(fusionName):
     flowName = fusionName[0].upper()
     if fusionName[0].islower() and fusionName[1:].isupper():
