@@ -503,45 +503,12 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
 	                                                      "value": paramInModel.itemByName(convertToFusionName(name)).expression
                                                          })
 
-    # THE FOLLOWING PART HANDLES PUSHING PHYSICAL PROPERTIES SUCH AS MASS AND VOLUME
-
-    # Get the root component of the active design.
-    product = app.activeProduct
-    rootComp = adsk.fusion.Design.cast(product).rootComponent
+    massExpression, volumeExpression = calculateTotalMassAndVolume()
+    #ui.messageBox(volumeExpression)
+    #ui.messageBox(massExpression)
 
 
-    # The following two for loops traverses through the active design and totals the mass and volume of every body within the design.
 
-    # Iterate over any bodies in the root component.
-    totalVolume = 0
-    totalMass = 0
-    for i in range(0, rootComp.bRepBodies.count):
-        body = rootComp.bRepBodies.item(i)
-        # Get the mass and volume of the current body and add it to the total.
-        totalVolume += body.physicalProperties.volume
-        totalMass += body.physicalProperties.mass
-
-    # Iterate through all of the occurrences in the assembly.
-    for i in range(0, rootComp.allOccurrences.count):
-        occ = rootComp.allOccurrences.item(i)
-            
-        # Get the associated component.
-        comp = occ.component
-            
-        # Iterate over all of the bodies within the component.
-        for j in range(0, comp.bRepBodies.count):
-            body = comp.bRepBodies.item(j)
-                
-            # Get the mass and volume of the current body and add it to the total.
-            totalVolume += body.physicalProperties.volume
-            totalMass += body.physicalProperties.mass
-
-    # Create the expression for the volume using the default distance units
-    volumeResult = design.unitsManager.formatInternalValue(totalVolume, design.unitsManager.defaultLengthUnits + '^3', True)
-    # Create the expression for the mass using the 'kg' unit
-    massResult = str(totalVolume) + " kg"
-
-    
 def convertToFlowName(fusionName):
     flowName = fusionName[0].upper()
     if fusionName[0].islower() and fusionName[1:].isupper():
@@ -687,6 +654,43 @@ def adjustExpression(expression):
             expression = expression[:i + 1] + " " + expression[i + 1:]
     return expression   
 
+def calculateTotalMassAndVolume():
+    # Get the root component of the active design.
+    product = app.activeProduct
+    rootComp = adsk.fusion.Design.cast(product).rootComponent
+
+    # The following two for loops traverses through the active design and totals the mass and volume of every body within the design.
+
+    # Iterate over any bodies in the root component.
+    totalVolume = 0
+    totalMass = 0
+    for i in range(0, rootComp.bRepBodies.count):
+        body = rootComp.bRepBodies.item(i)
+        # Get the mass and volume of the current body and add it to the total.
+        totalVolume += body.physicalProperties.volume
+        totalMass += body.physicalProperties.mass
+
+    # Iterate through all of the occurrences in the assembly.
+    for i in range(0, rootComp.allOccurrences.count):
+        occ = rootComp.allOccurrences.item(i)
+            
+        # Get the associated component.
+        comp = occ.component
+            
+        # Iterate over all of the bodies within the component.
+        for j in range(0, comp.bRepBodies.count):
+            body = comp.bRepBodies.item(j)
+                
+            # Get the mass and volume of the current body and add it to the total.
+            totalVolume += body.physicalProperties.volume
+            totalMass += body.physicalProperties.mass
+
+    # Create the expression for the volume using the default distance units
+    volumeExpression = product.unitsManager.formatInternalValue(totalVolume, product.unitsManager.defaultLengthUnits + '^3', True)
+    # Create the expression for the mass, which is rounded to two decimal points, using the 'kg' unit
+    massExpression = str(round(totalVolume, 2)) + " kg"
+
+    return volumeExpression, massExpression
 
 
 #def getFolderId(client, categoryId):
