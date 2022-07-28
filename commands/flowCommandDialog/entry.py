@@ -231,9 +231,6 @@ def run(context, operation):
 
 
 
-
-
-
 def open_docs_by_name(app: adsk.core.Application, ui: adsk.core.UserInterface, target_project_name: str, target_design_name: str):
     # Get all available data
     all_data: adsk.core.Data = app.data
@@ -314,9 +311,9 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
         if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
             dataIdToExpressionDict[x["data_id"]] = "0 mm"
         else:
-            # extract the value from the query
-            data = x["value"]
-            # put the value into dataIdList dictionary
+            # extract the expression from the query and adjust the expression if there is no space between the value and the unit
+            data = adjustExpression(x["value"].strip())
+            # put the expression into dataIdToExpression dictionary
             dataIdToExpressionDict[x["data_id"]] = data
 
 
@@ -648,6 +645,12 @@ def removeVersionSuffix(fileName):
     rm = splittedFileName[:-1]
     listToStr = ' '.join([str(elem) for elem in rm])
     return listToStr
+
+def adjustExpression(expression):
+    for i in range(len(expression) - 1):
+        if expression[i].isnumeric() and expression[i + 1].isalpha(): # there is no space between the value and units in this case
+            expression = expression[:i + 1] + " " + expression[i + 1:]
+    return expression   
 
 
 
