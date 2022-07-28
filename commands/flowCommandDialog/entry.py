@@ -4,6 +4,7 @@ import os
 from ...lib import fusion360utils as futil
 from ... import config
 import traceback
+import os
 
 app = adsk.core.Application.get()
 ui = app.userInterface
@@ -200,6 +201,11 @@ def run(context, operation):
 
         # What to open
         target_project_name = app.data.activeProject.name
+
+        # exits when there is no design opened in Fusion and the user pulls 
+        if str(app.activeProduct.rootComponent.name) == "(Unsaved)":
+            sys.exit("Please open a design in Fusion")
+
         target_design_name = removeVersionSuffix(app.activeProduct.rootComponent.name)
         
         # Open this design in fusion to get access to much deeper parts of the API
