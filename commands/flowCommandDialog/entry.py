@@ -308,6 +308,7 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
 
     flowParameterNameList = []
     dataIdToExpressionDict = {}
+
     for x in datasQueryResult["data"]:
         # We do not want Mass and Volume parameters to exist in Fusion which already has them in physical properties section
         if x["name"] != "Mass" and x["name"] != "Volume":
@@ -316,7 +317,7 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
             else:
                 # extract the expression from the query and adjust the expression if there is no space between the value and the unit
-                data = adjustExpression(x["value"].strip())
+                data = adjustExpression(x["value"])
                 # put the expression into dataIdToExpression dictionary
                 dataIdToExpressionDict[x["data_id"]] = data
 
@@ -330,7 +331,6 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
     
     difference = subtractLists(dataIdToExpressionDict.keys(), dataFusionNameToIdDict.values())
 
-   
     # if difference is not empty, there are parameters in Flow which have no corresponding parameters in Fusion, and thus they must be created in Fusion
     for x in difference: 
         if x is not None:
@@ -454,18 +454,24 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
     )
 
     # Keys of dataFlowNameToExpressionDict1 are that corresponding to Flow and keys of dataFlowNameToExpessionDict2 are that corresponding to Fusion 
+    
+    flowParameterNameList = []
     dataFlowNameToExpressionDict1 = {}
     for x in datasQueryResult["data"]: 
-        # extract the value from the query
+        flowParameterNameList.append(x["name"])
+        # extract the parameter expression from the query
         dataExpression = x["value"]
-        # put the value into dataIdList dictionary
+        # put the parameter expression into dataFlowNameToExpressionDict1 dictionary
         dataFlowNameToExpressionDict1[x["name"]] = dataExpression
+
+    if len(set(flowParameterNameList)) < len(flowParameterNameList):
+        ui.messageBox("There are two parameters with the same name in Flow, please archive one of them")
+        return
 
     paramInModel = design.userParameters
     dataFlowNameToExpressionDict2 = {}
     for i in range(paramInModel.count):
         dataFlowNameToExpressionDict2[convertToFlowName(paramInModel.item(i).name)] = paramInModel.item(i).expression
-
 
     # difference1 contains names of the parameters in Fusion which does not exists in Flow
     difference1 = subtractLists(dataFlowNameToExpressionDict2.keys(), dataFlowNameToExpressionDict1.keys())
