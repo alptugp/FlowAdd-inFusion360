@@ -5,6 +5,12 @@ from ...lib import fusion360utils as futil
 from ... import config
 import traceback
 import os
+from dbm.ndbm import library
+from http import client
+import os
+import sys
+from tokenize import Double
+from unicodedata import category
 
 app = adsk.core.Application.get()
 ui = app.userInterface
@@ -172,14 +178,6 @@ def command_destroy(args: adsk.core.CommandEventArgs):
 
 
 
-
-from dbm.ndbm import library
-from http import client
-import os
-import sys
-from tokenize import Double
-from unicodedata import category
-
 # Add vendor directory to module search path
 parent_dir = os.path.abspath(os.path.dirname(__file__))
 vendor_dir = os.path.join(parent_dir, 'vendor')
@@ -204,7 +202,8 @@ def run(context, operation):
 
         # exits when there is no design opened in Fusion and the user pulls 
         if str(app.activeProduct.rootComponent.name) == "(Unsaved)":
-            sys.exit("Please open a design in Fusion")
+            ui.messageBox("Please open a design in Fusion")
+            return
 
         target_design_name = removeVersionSuffix(app.activeProduct.rootComponent.name)
         
@@ -217,13 +216,15 @@ def run(context, operation):
             ui.messageBox("No active Fusion 360 design", "No Design")
 
         if operation == "pull":
-            # fetches values from Flow and updates the parameters in Fusion
-            fetchDatafromFlow(ui, design)
-            ui.messageBox("Parameters pulled from Flow successfully")
+            # fetches values from Flow and updates the parameters in Fusion if fetchDataFromFlow
+            result = fetchDataFromFlow(ui, design)
+            if result:
+                ui.messageBox("Parameters pulled from Flow successfully")
         elif operation == "push":
-            # pushes values to Flow
-            pushValuesToFlow(ui, design)
-            ui.messageBox("Parameters pushed to Flow successfully")
+            # pushes parameters to Flow if pushValuesToFlow operated successfully 
+            result = pushValuesToFlow(ui, design)
+            if result:
+                ui.messageBox("Parameters pushed to Flow successfully")
               
     except:
         if ui:
@@ -256,7 +257,7 @@ def open_docs_by_name(app: adsk.core.Application, ui: adsk.core.UserInterface, t
         ui.messageBox(f"Design Not Found: {target_design_name}")
 
 
-def fetchDatafromFlow(ui, design: adsk.fusion.Design):
+def fetchDataFromFlow(ui, design: adsk.fusion.Design):
     # Opening JSON file and authenticating the account
     with open('/Users/alptug/Desktop/cred/Autodesk-x-flow-intergration/credentials.json') as json_file:
         Data = json.load(json_file)
@@ -305,10 +306,12 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
 
     paramInModel = design.userParameters
 
+    flowParameterNameList = []
     dataIdToExpressionDict = {}
     for x in datasQueryResult["data"]:
         # We do not want Mass and Volume parameters to exist in Fusion which already has them in physical properties section
         if x["name"] != "Mass" and x["name"] != "Volume":
+            flowParameterNameList.append(x["name"])
             if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
             else:
@@ -317,6 +320,9 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
                 # put the expression into dataIdToExpression dictionary
                 dataIdToExpressionDict[x["data_id"]] = data
 
+    if len(set(flowParameterNameList)) < len(flowParameterNameList):
+        ui.messageBox("There are two parameters with the same name in Flow, please archive one of them")
+        return
 
     dataFusionNameToIdDict = {}
     for i in range(paramInModel.count):
@@ -324,6 +330,7 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
     
     difference = subtractLists(dataIdToExpressionDict.keys(), dataFusionNameToIdDict.values())
 
+   
     # if difference is not empty, there are parameters in Flow which have no corresponding parameters in Fusion, and thus they must be created in Fusion
     for x in difference: 
         if x is not None:
@@ -362,6 +369,8 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
         # user is informed when a parameter does not exist in Flow but exists in Fusion due to its deletion within Flow etc.
         else:
             ui.messageBox(str(convertToFlowName(parameterName)) + " does not exist in Flow")
+
+    return True
 
     
 
@@ -515,6 +524,8 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
         client.execute(datasUpdateQuery, variable_values={"dataId": dataCreateQueryResult["createData"]["data"]["data_id"],
 	                                                      "value": paramInModel.itemByName(convertToFusionName(name)).expression
                                                          })
+
+    return True
 
     
 
@@ -696,7 +707,7 @@ def calculateTotalMassAndVolume():
             totalMass += body.physicalProperties.mass
 
     # Create the expression for the volume using the default distance units
-    volumeExpression = product.unitsManager.formatInternalValue(round(totalMass, 3), product.unitsManager.defaultLengthUnits + '^3', True)
+    volumeExpression = product.unitsManager.formatInternalValue(round(totalVolume, 3), product.unitsManager.defaultLengthUnits + '^3', True)
     # Create the expression for the mass, which is rounded to two decimal points, using the 'kg' unit
     massExpression = str(round(totalMass, 3)) + " kg"
 
