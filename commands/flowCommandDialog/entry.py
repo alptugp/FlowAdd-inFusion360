@@ -307,14 +307,15 @@ def fetchDatafromFlow(ui, design: adsk.fusion.Design):
 
     dataIdToExpressionDict = {}
     for x in datasQueryResult["data"]:
-        # 
-        if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
-            dataIdToExpressionDict[x["data_id"]] = "0 mm"
-        else:
-            # extract the expression from the query and adjust the expression if there is no space between the value and the unit
-            data = adjustExpression(x["value"].strip())
-            # put the expression into dataIdToExpression dictionary
-            dataIdToExpressionDict[x["data_id"]] = data
+        # We do not want Mass and Volume parameters to exist in Fusion which already has them in physical properties section
+        if x["name"] != "Mass" and x["name"] != "Volume":
+            if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
+                dataIdToExpressionDict[x["data_id"]] = "0 mm"
+            else:
+                # extract the expression from the query and adjust the expression if there is no space between the value and the unit
+                data = adjustExpression(x["value"].strip())
+                # put the expression into dataIdToExpression dictionary
+                dataIdToExpressionDict[x["data_id"]] = data
 
 
     dataFusionNameToIdDict = {}
@@ -463,10 +464,22 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
     # difference2 contains names of the parameters in Fusion which exists in Flow (the union of difference 1 and difference2 is equal to dataFlowNameToExpressionDict2.keys())
     difference2 = subtractLists(dataFlowNameToExpressionDict2.keys(), difference1)
 
+    # difference3 contains names of the parameters in Flow which does not exist in Fusion
+    difference3 = subtractLists(dataFlowNameToExpressionDict1.keys(), dataFlowNameToExpressionDict2.keys())
+
     difference2ToExpressionDict = {}
+
+    for name in difference3:
+        volumeExpression, massExpression = calculateTotalMassAndVolume()
+        if name == "Mass":
+            difference2ToExpressionDict[name] = massExpression
+        elif name == "Volume":
+            difference2ToExpressionDict[name] = volumeExpression
+
+    
     for name, expression in dataFlowNameToExpressionDict2.items():
         if name in difference2:
-            difference2ToExpressionDict[name] = expression
+                difference2ToExpressionDict[name] = expression
 
     for name, expression in difference2ToExpressionDict.items():
         dataId = getParameterId(name, datasQueryResult["data"])
@@ -503,10 +516,7 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
 	                                                      "value": paramInModel.itemByName(convertToFusionName(name)).expression
                                                          })
 
-    massExpression, volumeExpression = calculateTotalMassAndVolume()
-    #ui.messageBox(volumeExpression)
-    #ui.messageBox(massExpression)
-
+    
 
 
 def convertToFlowName(fusionName):
@@ -686,9 +696,9 @@ def calculateTotalMassAndVolume():
             totalMass += body.physicalProperties.mass
 
     # Create the expression for the volume using the default distance units
-    volumeExpression = product.unitsManager.formatInternalValue(totalVolume, product.unitsManager.defaultLengthUnits + '^3', True)
+    volumeExpression = product.unitsManager.formatInternalValue(round(totalMass, 3), product.unitsManager.defaultLengthUnits + '^3', True)
     # Create the expression for the mass, which is rounded to two decimal points, using the 'kg' unit
-    massExpression = str(round(totalVolume, 2)) + " kg"
+    massExpression = str(round(totalMass, 3)) + " kg"
 
     return volumeExpression, massExpression
 
