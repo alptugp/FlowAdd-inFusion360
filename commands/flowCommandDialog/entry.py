@@ -1,4 +1,5 @@
 from re import T
+from this import d
 import adsk.core
 import os
 from ...lib import fusion360utils as futil
@@ -310,8 +311,8 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
     dataIdToExpressionDict = {}
 
     for x in datasQueryResult["data"]:
-        # We do not want Mass and Volume parameters to exist in Fusion which already has them in physical properties section
-        if x["name"] != "Mass" and x["name"] != "Volume":
+        # We do not want Mass, Volume and Area parameters to exist in Fusion which already has them in physical properties section
+        if x["name"] != "Mass" and x["name"] != "Volume" and x["name"] != "Area":
             flowParameterNameList.append(x["name"])
             if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
@@ -485,12 +486,13 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
     difference2ToExpressionDict = {}
 
     for name in difference3:
-        volumeExpression, massExpression = calculateTotalMassAndVolume()
+        volumeExpression, massExpression, areaExpression = calculatePhysicalProperties()
         if name == "Mass":
             difference2ToExpressionDict[name] = massExpression
         elif name == "Volume":
             difference2ToExpressionDict[name] = volumeExpression
-
+        elif name == "Area":
+            difference2ToExpressionDict[name] = areaExpression
     
     for name, expression in dataFlowNameToExpressionDict2.items():
         if name in difference2:
@@ -546,15 +548,7 @@ def convertToFlowName(fusionName):
                 flowName += " " + fusionName[i]
             else:
                 flowName += fusionName[i]
-    ## for i in range(1, len(fusionName)):
-       ## if fusionName[i].islower() and fusionName[i - 1] == '_':
-         ##   flowName += fusionName[i].upper()
-        ## elif fusionName[i].islower():
-        ##    flowName += fusionName[i]
-        ##elif fusionName[i] == '_':
-          ##  flowName += " "
-        ##elif fusionName[i].isupper():
-          ##  flowName += " " + fusionName[i]
+
     return flowName
 
 # def getParameterValue(parameter):
@@ -681,7 +675,7 @@ def adjustExpression(expression):
             expression = expression[:i + 1] + " " + expression[i + 1:]
     return expression   
 
-def calculateTotalMassAndVolume():
+def calculatePhysicalProperties():
     # Get the root component of the active design.
     product = app.activeProduct
     rootComp = adsk.fusion.Design.cast(product).rootComponent
@@ -691,11 +685,13 @@ def calculateTotalMassAndVolume():
     # Iterate over any bodies in the root component.
     totalVolume = 0
     totalMass = 0
+    totalArea = 0
     for i in range(0, rootComp.bRepBodies.count):
         body = rootComp.bRepBodies.item(i)
         # Get the mass and volume of the current body and add it to the total.
         totalVolume += body.physicalProperties.volume
         totalMass += body.physicalProperties.mass
+        totalArea += body.physicalProperties.area
 
     # Iterate through all of the occurrences in the assembly.
     for i in range(0, rootComp.allOccurrences.count):
@@ -711,13 +707,16 @@ def calculateTotalMassAndVolume():
             # Get the mass and volume of the current body and add it to the total.
             totalVolume += body.physicalProperties.volume
             totalMass += body.physicalProperties.mass
+            totalArea += body.physicalProperties.area
 
-    # Create the expression for the volume using the default distance units
+    # Create the expression for the volume, which is rounded to three decimal points, using the default length units
     volumeExpression = product.unitsManager.formatInternalValue(round(totalVolume, 3), product.unitsManager.defaultLengthUnits + '^3', True)
-    # Create the expression for the mass, which is rounded to two decimal points, using the 'kg' unit
+    # Create the expression for the mass, which is rounded to three decimal points, using the 'kg' unit
     massExpression = str(round(totalMass, 3)) + " kg"
+    # Create the expression for the area, which is rounded to three decimal points, using the default length units 
+    areaExpression = product.unitsManager.formatInternalValue(round(totalArea, 3), product.unitsManager.defaultLengthUnits + '^2', True)
 
-    return volumeExpression, massExpression
+    return volumeExpression, massExpression, areaExpression
 
 
 #def getFolderId(client, categoryId):
