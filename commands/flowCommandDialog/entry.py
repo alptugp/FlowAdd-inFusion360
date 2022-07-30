@@ -18,7 +18,7 @@ ui = app.userInterface
 
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_flowCmdDialog'
 CMD_NAME = 'Sync'
-CMD_Description = 'Sync the values with Flow'
+CMD_Description = 'Sync the parameters with Flow'
 
 # Specifies that the command will be promoted to the panel.
 IS_PROMOTED = True
@@ -86,10 +86,6 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     cmd = args.command
     cmd.setDialogInitialSize(400, 400)
 
-    # set_up = inputs.addBoolValueInput('set_up', 'Set Up', True, '', False)
-    # pull = inputs.addBoolValueInput('pull', 'Pull', True, '', False)
-    # push = inputs.addBoolValueInput('push', 'Push', True, '', False)                                                                                      
-
     # Creates radio button group input for setting up, pulling and pushing the changed values.
     radioButtonGroup = inputs.addRadioButtonGroupCommandInput('syncOptions', 'Sync Options')
     radioButtonItems = radioButtonGroup.listItems
@@ -112,8 +108,6 @@ def command_execute(args: adsk.core.CommandEventArgs):
 
     # Gets a reference to the command's inputs.
     inputs = args.command.commandInputs
-    # text_box: adsk.core.TextBoxCommandInput = inputs.itemById('text_box')
-    # value_input: adsk.core.ValueCommandInput = inputs.itemById('value_input')
 
     if inputs.itemById('syncOptions').listItems[0].isSelected == True:
         ui.messageBox('Set Up')
@@ -344,14 +338,12 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
             # the parameter has no assigned value in Flow and thus assign it to 0 mm in Fusion
             else:
                 ui.messageBox("The parameter named " + getParameterName(x, datasQueryResult["data"]) + " was not assigned to a value in Flow and thus it is now assigned to 0 mm in Fusion")
-                # dataIdToValueDict[x] = "0 mm"
-                # dataNameToIdDict[convertToFusionName(getParameterName(x, datasQueryResult["data"]))] = x
                 paramInModel.add(convertToFusionName(getParameterName(x, datasQueryResult["data"])),
                                  adsk.core.ValueInput.createByString("0 mm"), 
                                  "mm", 
                                  "")
         
-    # transfer flow values to fusion names and put it into Valuesdict
+    # The following dictionary matches the names of the parameters in Fusion with their corresponding expressions in Flow
     dataFusionNameToExpressionDict = {}
 
     for (name, dataId) in dataFusionNameToIdDict.items():
