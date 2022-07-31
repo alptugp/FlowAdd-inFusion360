@@ -527,8 +527,6 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
 
     return True
 
-    
-
 
 def convertToFlowName(fusionName):
     flowName = fusionName[0].upper()
@@ -542,9 +540,6 @@ def convertToFlowName(fusionName):
                 flowName += fusionName[i]
 
     return flowName
-
-# def getParameterValue(parameter):
-  #  return (parameter.split())[0]
 
 def getParameterUnit(parameter):
     return (parameter.split())[1]
@@ -569,11 +564,6 @@ def getParameterId(dataName, dataDict):
     for x in dataDict:
         if x["name"] == dataName:
             return x["data_id"]
-    
-#def getParameterExpression(dataId, datasQueryResult):
- #   for x in datasQueryResult["data"]:
-  #      if x["data_id"] == dataId:
-   #         return x["value"]
 
 def convertToFusionName(flowName):
     fusionName = flowName[0].lower() + flowName[1:].replace(" ", "")
