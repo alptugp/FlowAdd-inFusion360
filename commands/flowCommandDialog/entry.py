@@ -311,6 +311,9 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
             if x["value"] == {} and paramInModel.itemByName(convertToFusionName(x["name"])) is not None:
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
             else:
+                if hasNoUnit(x["value"]):
+                    ui.messageBox("Please enter the units of the parameter named", x["name"], "in Flow")
+                    return
                 # extract the expression from the query and adjust the expression if there is no space between the value and the unit
                 data = adjustExpression(x["value"])
                 # put the expression into dataIdToExpression dictionary
@@ -656,6 +659,9 @@ def adjustExpression(expression):
         if expression[i].isnumeric() and expression[i + 1].isalpha(): # there is no space between the value and units in this case
             expression = expression[:i + 1] + " " + expression[i + 1:]
     return expression   
+
+def hasNoUnit(expression):
+    return expression.isnumeric()
 
 def calculatePhysicalProperties():
     # Get the root component of the active design.
