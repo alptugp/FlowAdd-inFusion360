@@ -253,45 +253,7 @@ def open_docs_by_name(app: adsk.core.Application, ui: adsk.core.UserInterface, t
 
 
 def fetchDataFromFlow(ui, design: adsk.fusion.Design):
-    # Opening JSON file and authenticating the account
-    with open('/Users/alptug/Desktop/cred/Autodesk-x-flow-intergration/credentials.json') as json_file:
-        Data = json.load(json_file)
-        username = Data["username"]
-        password = Data["password"]
-
-    # authenticating 
-    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_iODQDOUFS"
-
-    payload = {
-        "ClientId": "4bmi0kl02b8312nt2qnacdkubn",
-        "AuthFlow": "USER_PASSWORD_AUTH",
-        "AuthParameters": {
-            "USERNAME": username,
-            "PASSWORD": password
-        }
-    }
-
-    headers = {
-        "Content-Type": "application/x-amz-json-1.1",
-        "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth"
-    }
-
-    response = requests.request("POST", url, json=payload, headers=headers)
-
-    # uses token to authenticate the account
-    Dict = json.loads(response.text)
-    token = Dict["AuthenticationResult"]["IdToken"]
-
-    # transport with a defined url endpoint
-    transport = AIOHTTPTransport(
-        url = "https://api.flowengineering.com/v1/graphql",
-        headers = {
-            "Authorization": f'Bearer {token}'
-        },
-    )
-
-    # Create a GraphQL client using the defined transport
-    client = Client(transport=transport, fetch_schema_from_transport=True)
+    client = createClient()
 
     projectId = getProjectId(client)
 
@@ -312,10 +274,10 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
             else:
                 if hasNoUnit(x["value"]):
-                    ui.messageBox("Please enter the units of the parameter named " + str(x["name"]) + " in Flow")
+                    ui.messageBox("Please enter the units of the parameter named " + x["name"] + " in Flow")
                     return
                 elif hasNoValue(x["value"]):
-                    ui.messageBox("Please enter the value of the parameter named " + str(x["name"]) + " in Flow")
+                    ui.messageBox("Please enter the value of the parameter named " + x["name"] + " in Flow")
                     return
                 # extract the expression from the query and adjust the expression if there is no space between the value and the unit
                 data = adjustExpression(x["value"])
@@ -376,45 +338,7 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
 
 
 def pushValuesToFlow(ui, design: adsk.fusion.Design):
-    # Opening JSON file and authenticating the account
-    with open('/Users/alptug/Desktop/cred/Autodesk-x-flow-intergration/credentials.json') as json_file:
-        Data = json.load(json_file)
-        username = Data["username"]
-        password = Data["password"]
-
-    # authenticating 
-    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_iODQDOUFS"
-
-    payload = {
-        "ClientId": "4bmi0kl02b8312nt2qnacdkubn",
-        "AuthFlow": "USER_PASSWORD_AUTH",
-        "AuthParameters": {
-            "USERNAME": username,
-            "PASSWORD": password
-        }
-    }
-
-    headers = {
-        "Content-Type": "application/x-amz-json-1.1",
-        "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth"
-    }
-
-    response = requests.request("POST", url, json=payload, headers=headers)
-
-    # uses token to authenticate the account
-    Dict = json.loads(response.text)
-    token = Dict["AuthenticationResult"]["IdToken"]
-
-    # transport with a defined url endpoint
-    transport = AIOHTTPTransport(
-        url = "https://api.flowengineering.com/v1/graphql",
-        headers = {
-            "Authorization": f'Bearer {token}'
-        },
-    )
-
-    # Create a GraphQL client using the defined transport
-    client = Client(transport=transport, fetch_schema_from_transport=True)
+    client = createClient()
 
     projectId = getProjectId(client)
 
@@ -668,6 +592,49 @@ def hasNoUnit(expression):
 
 def hasNoValue(expression):
     return expression.isalpha()
+
+def createClient():
+    # Opening JSON file and authenticating the account
+    with open('/Users/alptug/Desktop/cred/Autodesk-x-flow-intergration/credentials.json') as json_file:
+        Data = json.load(json_file)
+        username = Data["username"]
+        password = Data["password"]
+
+    # authenticating 
+    url = "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_iODQDOUFS"
+
+    payload = {
+        "ClientId": "4bmi0kl02b8312nt2qnacdkubn",
+        "AuthFlow": "USER_PASSWORD_AUTH",
+        "AuthParameters": {
+            "USERNAME": username,
+            "PASSWORD": password
+        }
+    }
+
+    headers = {
+        "Content-Type": "application/x-amz-json-1.1",
+        "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth"
+    }
+
+    response = requests.request("POST", url, json=payload, headers=headers)
+
+    # uses token to authenticate the account
+    Dict = json.loads(response.text)
+    token = Dict["AuthenticationResult"]["IdToken"]
+
+    # transport with a defined url endpoint
+    transport = AIOHTTPTransport(
+        url = "https://api.flowengineering.com/v1/graphql",
+        headers = {
+            "Authorization": f'Bearer {token}'
+        },
+    )
+
+    # Create a GraphQL client using the defined transport
+    client = Client(transport=transport, fetch_schema_from_transport=True)
+
+    return client
 
 def calculatePhysicalProperties():
     # Get the root component of the active design.
