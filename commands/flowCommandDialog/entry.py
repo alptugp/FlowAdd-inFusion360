@@ -312,10 +312,10 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
                 dataIdToExpressionDict[x["data_id"]] = "0 mm"
             else:
                 if hasNoUnit(x["value"]):
-                    ui.messageBox("Please enter the units of the parameter named", x["name"], "in Flow")
+                    ui.messageBox("Please enter the units of the parameter named " + str(x["name"]) + " in Flow")
                     return
                 elif hasNoValue(x["value"]):
-                    ui.messageBox("Please enter the value of the parameter named", x["name"], "in Flow")
+                    ui.messageBox("Please enter the value of the parameter named " + str(x["name"]) + " in Flow")
                     return
                 # extract the expression from the query and adjust the expression if there is no space between the value and the unit
                 data = adjustExpression(x["value"])
@@ -664,7 +664,7 @@ def adjustExpression(expression):
     return expression   
 
 def hasNoUnit(expression):
-    return expression.isnumeric()
+    return str(expression).isnumeric()
 
 def hasNoValue(expression):
     return expression.isalpha()
