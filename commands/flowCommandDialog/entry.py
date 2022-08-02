@@ -678,24 +678,3 @@ def calculatePhysicalProperties():
     areaExpression = product.unitsManager.formatInternalValue(round(totalArea, 3), product.unitsManager.defaultLengthUnits + '^2', True)
 
     return volumeExpression, massExpression, areaExpression
-
-
-#def getFolderId(client, categoryId):
-#    dataFolderQuery = gql(
-#        """
-#    query DataFolders($categoryId: uuid!) {
-#	    data_folder(where: { category_id: { _eq: $categoryId } }) {
-#		    folder_id
-#		    name
-#		    category {
-#			    category_id
-#			    name
-#			    human_id_prefix
-#		    }
-#	    }
-#    }
-#    """
-#    )
-#
-#    dataFolderQueryResult = client.execute(dataFolderQuery, variable_values={"categoryId": categoryId})
-#    return dataFolderQueryResult
