@@ -318,9 +318,6 @@ def fetchDataFromFlow(ui, design: adsk.fusion.Design):
         dataFusionNameToExpressionDict[name] = findMatchingValue(dataId, dataIdToExpressionDict)
             
     for parameterName, parameterValue in dataFusionNameToExpressionDict.items():
-        # ui.messageBox(str(parameterName) + ": " + str(parameterValue))
-        # if parameterValue == {}: 
-          #  paramInModel.itemByName(parameterName).expression = adsk.core.ValueInput.createByString("0 mm")
         if parameterValue is not None:
             if getParameterUnit(paramInModel.itemByName(parameterName).expression) == getParameterUnit(parameterValue):
                 paramInModel.itemByName(parameterName).expression = parameterValue
@@ -443,8 +440,6 @@ def pushValuesToFlow(ui, design: adsk.fusion.Design):
     }
     """
     )
-
-    # folderId = getFolderId(client, categoryId)
     
     for name in difference1: 
         dataCreateQueryResult = client.execute(dataCreateQuery, variable_values={"category": categoryId,
@@ -481,9 +476,6 @@ def findMatchingDataId(fusionName, datasQueryResult):
     for x in datasQueryResult["data"]:
         if x["name"] == convertToFlowName(fusionName):
             return x["data_id"]
-    
-    # if the for loop does not return anything, there is no matching parameter name in Fusion and thus a corresponding one shoudl be created
-    # paramInModel.add(fusi, , , "")
 
 def getParameterName(dataId, dataDict):
     for x in dataDict:
